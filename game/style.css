@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  background: #1d2b2b;
+  color: #fff6e0;
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+}
+.wrap {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 12px 16px 24px;
+  text-align: center;
+}
+h1 {
+  margin: 4px 0 0;
+  font-size: 34px;
+  color: #ffd23f;
+  letter-spacing: 2px;
+}
+.tagline { margin: 2px 0 10px; color: #ffe9b0; }
+canvas {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  border: 4px solid #8a5a2b;
+  border-radius: 12px;
+  background: #2e8b8b;
+}
+.help { font-size: 14px; line-height: 1.5; margin: 8px 0 0; color: #d7ccc8; }
+.help strong { color: #ffd23f; }
+/* Screenshot states: the canvas alone fills the 1280x800 frame. */
+body.shot { background: #2e8b8b; }
+body.shot .wrap { max-width: none; padding: 0; }
+body.shot h1, body.shot .tagline, body.shot .help { display: none; }
+body.shot canvas { border: none; border-radius: 0; }
