@@ -57,6 +57,11 @@ export function interact(state, station, sfx, clickX, clickY) {
       if (carrying && CHOP_MAP[carrying]) {
         state.board = { item: CHOP_MAP[carrying], raw: carrying, progress: 0, needle: 0, needleDir: 1, done: false, perfect: false };
         state.carrying = null;
+        // First chop ever: show the short-lived hint by the board.
+        if (!state.chopHintShown) {
+          state.chopHintShown = true;
+          state.chopHint = 4;
+        }
         if (sfx) sfx.place();
       } else if (carrying) {
         deny(state, sfx, 'Tidak bisa diiris!');
@@ -218,9 +223,9 @@ export function updateChopping(state, dt, sfx) {
   const b = state.board;
   if (!b || b.done) return;
   b.progress += dt / TUNING.chopSeconds;
-  // The needle sweeps back and forth; release E inside the green band
+  // The needle sweeps back and forth; release E inside the yellow band
   // for a perfect chop.
-  b.needle += b.needleDir * dt * 1.6;
+  b.needle += b.needleDir * dt * TUNING.chopNeedleSpeed;
   if (b.needle > 1) { b.needle = 1; b.needleDir = -1; }
   if (b.needle < 0) { b.needle = 0; b.needleDir = 1; }
   if (Math.random() < dt * 8) {
@@ -234,7 +239,7 @@ export function updateChopping(state, dt, sfx) {
 export function releaseChop(state, sfx) {
   const b = state.board;
   if (!b || b.done) return;
-  const inSpot = b.needle >= 0.35 && b.needle <= 0.65;
+  const inSpot = b.needle >= TUNING.chopSweetLow && b.needle <= TUNING.chopSweetHigh;
   if (inSpot) finishChop(state, sfx, true);
 }
 
@@ -245,8 +250,12 @@ function finishChop(state, sfx, perfect) {
   if (perfect) {
     state.perfectChops += 1;
     state.coins += TUNING.perfectChopBonus;
+    // Big on-screen flash + golden burst so the perfect chop is unmistakable.
+    state.perfectFlash = 1;
     const st = stationById('board');
     addFloat(state, st.x + st.w / 2, st.y - 8, `PERFECT +${TUNING.perfectChopBonus}`, '#7ed07e');
+    addParticles(state, st.x + st.w / 2, st.y + st.h / 2, '#ffd23f', 22, 110);
+    addParticles(state, st.x + st.w / 2, st.y + st.h / 2, '#7ed07e', 12, 90);
     if (sfx) sfx.perfect();
   } else if (sfx) {
     sfx.chop();

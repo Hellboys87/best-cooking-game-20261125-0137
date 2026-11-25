@@ -290,10 +290,10 @@ function drawStation(ctx, st, state) {
         ctx.arc(cx, cy, 34, -Math.PI / 2, -Math.PI / 2 + b.progress * Math.PI * 2);
         ctx.strokeStyle = '#57ab5a';
         ctx.stroke();
-        // Needle: release E while it is inside the green band for PERFECT.
+        // Needle: release E while it is inside the yellow band for PERFECT.
         const na = -Math.PI / 2 + b.needle * Math.PI * 2;
         ctx.beginPath();
-        ctx.arc(cx, cy, 34, -Math.PI / 2 + 0.35 * Math.PI * 2, -Math.PI / 2 + 0.65 * Math.PI * 2);
+        ctx.arc(cx, cy, 34, -Math.PI / 2 + TUNING.chopSweetLow * Math.PI * 2, -Math.PI / 2 + TUNING.chopSweetHigh * Math.PI * 2);
         ctx.strokeStyle = '#ffd23f';
         ctx.lineWidth = 9;
         ctx.stroke();
@@ -310,6 +310,22 @@ function drawStation(ctx, st, state) {
     } else {
       text(ctx, 'Taruh bahan di sini', st.x + st.w / 2, st.y + 40, 12, '#8a7a5a');
       text(ctx, 'lalu tahan E untuk iris', st.x + st.w / 2, st.y + 58, 11, '#8a7a5a');
+    }
+    // First-chop hint: a short-lived label just below the board, shown only
+    // the first time the player puts something on the board to chop.
+    if (state.chopHint > 0 && state.board && !state.board.done) {
+      const hx = st.x + st.w / 2;
+      const hy = st.y + st.h + 18;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, state.chopHint);
+      roundRect(ctx, hx - 150, hy - 15, 300, 30, 15);
+      ctx.fillStyle = 'rgba(20,12,8,0.88)';
+      ctx.fill();
+      ctx.strokeStyle = '#ffd23f';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      text(ctx, 'Lepas E di zona kuning = PERFECT!', hx, hy + 1, 13, '#ffd23f');
+      ctx.restore();
     }
   }
   if (st.id === 'stove') {
@@ -569,15 +585,19 @@ function drawHud(ctx, state) {
   if (state.combo >= 2) text(ctx, `COMBO x${state.combo}`, 240, 150, 16, '#ff9f43', 'right');
   // Rush badge.
   if (state.rush) {
-    roundRect(ctx, CANVAS_W - 256, 128, 220, 44, 22);
+    roundRect(ctx, CANVAS_W - 272, 128, 236, 44, 22);
     ctx.fillStyle = '#d64541';
     ctx.fill();
     ctx.strokeStyle = '#ffd23f';
     ctx.stroke();
-    text(ctx, '🔥 RUSH HOUR', CANVAS_W - 146, 150, 18, '#ffffff');
+    text(ctx, '🔥 RUSH HOUR', CANVAS_W - 154, 150, 20, '#ffffff');
   }
-  // Controls hint.
-  text(ctx, 'WASD/←↑→↓ gerak  •  E pakai/ambil  •  Klik stasiun untuk jalan ke sana  •  P jeda  •  M suara  •  R ulang', CANVAS_W / 2, 786, 12, 'rgba(255,255,255,0.75)');
+  // Controls hint — on a dark pill with padding, so it never crowds the
+  // bottom edge of the frame.
+  roundRect(ctx, 140, 766, CANVAS_W - 280, 26, 13);
+  ctx.fillStyle = 'rgba(20,12,8,0.62)';
+  ctx.fill();
+  text(ctx, 'WASD/←↑→↓ gerak  •  E pakai/ambil  •  Klik stasiun untuk jalan ke sana  •  P jeda  •  M suara  •  R ulang', CANVAS_W / 2, 779, 12, 'rgba(255,255,255,0.9)');
 }
 
 function drawTitle(ctx, state) {
@@ -606,7 +626,9 @@ function drawTitle(ctx, state) {
 }
 
 function drawEnd(ctx, state) {
-  ctx.fillStyle = 'rgba(20,12,8,0.72)';
+  // Fully opaque backdrop: nothing from the kitchen (cook sprite included)
+  // may show through the results screen.
+  ctx.fillStyle = '#17100a';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   const r = state.result;
   text(ctx, 'HARI SELESAI!', CANVAS_W / 2, 190, 56, '#ffd23f');
@@ -694,17 +716,41 @@ export function render(ctx, state) {
 
   drawHud(ctx, state);
 
-  // Banner (rush hour, unlocks).
-  if (state.banner) {
-    ctx.globalAlpha = Math.min(1, state.banner.life);
-    roundRect(ctx, CANVAS_W / 2 - 300, 240, 600, 92, 16);
-    ctx.fillStyle = 'rgba(214,69,65,0.95)';
+  // Perfect-chop flash: a big gold badge over the board, unmistakable.
+  if (state.perfectFlash > 0) {
+    const st = STATIONS.find((s) => s.id === 'board');
+    const cx = st.x + st.w / 2;
+    const cy = st.y + st.h / 2;
+    const a = Math.min(1, state.perfectFlash);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = '#ffd23f';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 52 + (1 - a) * 70, 0, Math.PI * 2);
+    ctx.stroke();
+    roundRect(ctx, cx - 128, cy - 28, 256, 56, 16);
+    ctx.fillStyle = 'rgba(20,12,8,0.92)';
     ctx.fill();
     ctx.strokeStyle = '#ffd23f';
     ctx.lineWidth = 3;
     ctx.stroke();
-    text(ctx, state.banner.text, CANVAS_W / 2, 272, 34, '#ffffff');
-    text(ctx, state.banner.sub, CANVAS_W / 2, 308, 16, '#ffe9b0');
+    text(ctx, `PERFECT! +${TUNING.perfectChopBonus}`, cx, cy + 1, 28, '#ffd23f');
+    ctx.restore();
+  }
+
+  // Banner (rush hour, unlocks) — large and solid so it reads at a glance
+  // even in a shrunken screenshot.
+  if (state.banner) {
+    ctx.globalAlpha = Math.min(1, state.banner.life);
+    roundRect(ctx, CANVAS_W / 2 - 360, 224, 720, 118, 18);
+    ctx.fillStyle = '#d64541';
+    ctx.fill();
+    ctx.strokeStyle = '#ffd23f';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    text(ctx, state.banner.text, CANVAS_W / 2, 264, 46, '#ffffff');
+    text(ctx, state.banner.sub, CANVAS_W / 2, 310, 19, '#ffe9b0');
     ctx.globalAlpha = 1;
   }
 

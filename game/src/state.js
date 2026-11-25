@@ -65,6 +65,9 @@ export function createState() {
     floats: [], // { x, y, text, color, life }
     banner: null, // { text, sub, life }
     burnFlash: 0,
+    perfectFlash: 0, // big PERFECT! flash over the board, decays to 0
+    chopHint: 0, // seconds left of the first-chop hint by the board
+    chopHintShown: false, // the first-chop hint only ever shows once
     shake: 0,
     animTime: 0, // drives idle animation; frozen for screenshot states
     rng: mulberry32(20261125),
@@ -142,6 +145,9 @@ export function startDay(state) {
   state.particles = [];
   state.floats = [];
   state.banner = null;
+  state.perfectFlash = 0;
+  state.chopHint = 0;
+  state.chopHintShown = false;
   state.result = null;
   state.cook.x = CANVAS_W / 2;
   state.cook.y = 430;
@@ -231,6 +237,8 @@ export function updateFx(state, dt) {
     if (state.banner.life <= 0) state.banner = null;
   }
   if (state.burnFlash > 0) state.burnFlash = Math.max(0, state.burnFlash - dt * 2.2);
+  if (state.perfectFlash > 0) state.perfectFlash = Math.max(0, state.perfectFlash - dt * 1.1);
+  if (state.chopHint > 0) state.chopHint = Math.max(0, state.chopHint - dt);
   if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 3);
 }
 

@@ -59,6 +59,9 @@ export function buildShotState(shot) {
     // Something sizzling on the wok and something chopping.
     state.wok = { item: 'egg', heat: 0.6 };
     state.board = { item: 'chilliChopped', raw: 'chilli', progress: 0.55, needle: 0.5, needleDir: 1, done: false, perfect: false };
+    // First chop in progress: show the one-time hint by the board.
+    state.chopHintShown = true;
+    state.chopHint = 2.5;
     state.coins = 86;
     state.combo = 2;
     state.served = 3;

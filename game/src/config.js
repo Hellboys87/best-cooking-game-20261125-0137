@@ -12,6 +12,9 @@ export const UNLOCK_FOURTH_AT = 120; // seconds elapsed when Es Teh unlocks
 export const TUNING = {
   cookSpeed: 260, // pixels per second
   chopSeconds: 2.2, // hold-to-chop time
+  chopNeedleSpeed: 1.3, // needle sweeps per second (slower = fairer timing)
+  chopSweetLow: 0.30, // perfect-chop band start (wider = achievable)
+  chopSweetHigh: 0.70, // perfect-chop band end
   wokSeconds: 5.0, // heat 0 -> 1 on the wok
   grillSeconds: 6.0, // heat 0 -> 1 on the grill
   heatGreenLow: 0.45, // wok/grill green zone start
